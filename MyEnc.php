@@ -5,7 +5,7 @@ use RuntimeException;
 
 class MyEnc
 {
-  protected $cipher = 'aes256';
+  protected $cipher = 'aes-256-gcm';
   protected $pass;
 
   protected $dataFile;
@@ -83,14 +83,16 @@ class MyEnc
     return $this->outFile;
   }
 
-  public function makeMetaFile($metaFile, $iv, $tag) {
+  public function makeMetaFile($metaFile, $iv, $tag)
+  {
     $meta = [];
     $meta[] = bin2hex($iv);
     $meta[] = isset($tag) ? bin2hex($tag) : null;
     return file_put_contents($metaFile, implode("\n", $meta));
   }
 
-  public function readMetaFile($metaFile) {
+  public function readMetaFile($metaFile)
+  {
     if (!is_file($metaFile)) {
       throw new RuntimeException('no meta file');
     }

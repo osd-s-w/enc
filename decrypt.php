@@ -1,7 +1,7 @@
 <?php
 namespace MyEnc;
 
-require_once __DIR__.'/include.php';
+require_once __DIR__.'/MyEnc.php';
 $ini = parse_ini_file('pass.ini');
 $pass = $ini['pass'];
 
