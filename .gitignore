@@ -2,3 +2,4 @@
 *.myenc
 *.myenc.meta
 pass.ini
+data/*
