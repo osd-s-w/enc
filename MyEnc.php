@@ -13,9 +13,22 @@ class MyEnc
   protected $metaFile;
   protected $outFile;
 
+  protected $postfixEncFile = '.myenc';
+  protected $postfixMetaFile = '.myenc.meta';
+
   public function __construct($pass)
   {
+    if ($pass=='') {
+      throw new RuntimeException('set password');
+    }
     $this->pass = $pass;
+  }
+
+  protected function setFiles($file)
+  {
+    $this->dataFile = $file;
+    $this->encFile = $file.$this->postfixEncFile;
+    $this->metaFile = $file.$this->postfixMetaFile;
   }
 
   public function readDataFile($file)
@@ -23,22 +36,25 @@ class MyEnc
     if (!is_file($file)) {
       throw new RuntimeException('no data file');
     }
-    $this->dataFile = $file;
-    $this->encFile = $file.".myenc";
-    $this->metaFile = $file.".myenc.meta";
+    $this->setFiles($file);
     return file_get_contents($file);
   }
 
-  public function readEncFile($file)
+  public function readEncFile($encfile)
   {
-    if (!is_file($file)) {
+    if (!is_file($encfile)) {
       throw new RuntimeException('no encrypted file');
     }
-    $this->encFile = $file;
-    $this->metaFile = $file.".meta";
-    $this->outFile = preg_replace('/\.myenc$/', '', $file);
+    $exp = str_replace(".", "\\.", $this->postfixEncFile);
+    if (!preg_match("/^(.+){$exp}$/", $encfile, $regexp)) {
+      throw new RuntimeException('Invalid file extension. '.$encfile);
+    }
+    $file = $regexp[1];
+    $this->setFiles($file);
+    $this->outFile = $file;
     if (is_file($this->outFile)) {
       $info = pathinfo($this->outFile);
+      $ext = $info['extension']!='' ? '.'.$info['extension']: '';
       $i = 0;
       while (is_file($this->outFile)) {
         $i++;
@@ -47,7 +63,7 @@ class MyEnc
           , $info['dirname']
           , $info['filename']
           , $i
-          , $info['extension'] ? ".".$info['extension']: ''
+          , $ext
         );
       }
     }
@@ -65,6 +81,9 @@ class MyEnc
     } else {
       $encData = openssl_encrypt($data, $this->cipher, $this->pass, $options=0, $iv);
     }
+    if (FALSE === $encData) {
+      throw new RuntimeException('Failed encrypt...');
+    }
     $res = $this->makeMetaFile($this->metaFile, $iv, $tag);
     file_put_contents($this->encFile, $encData);
     return $this->encFile;
@@ -78,6 +97,9 @@ class MyEnc
       $data = openssl_decrypt($encData, $this->cipher, $this->pass, $options=0, $iv, $tag);
     } else {
       $data = openssl_decrypt($encData, $this->cipher, $this->pass, $options=0, $iv);
+    }
+    if (FALSE === $data) {
+      throw new RuntimeException('Decrypt failed...');
     }
     $res = file_put_contents($this->outFile, $data);
     return $this->outFile;
