@@ -8,7 +8,7 @@ $pass = $ini['pass'];
 $opt = getOpt('f:');
 $file = isset($opt['f']) ? $opt['f'] : null;
 if (!$file) {
-  exit('Usage: -f filename');
+    exit('Usage: -f filename');
 }
 
 $myEnc = new MyEnc($pass);
