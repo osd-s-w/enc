@@ -37,7 +37,10 @@ class MyEnc
             throw new RuntimeException('no data file');
         }
         $this->setFiles($file);
-        return file_get_contents($file);
+        if (FALSE === ($res = file_get_contents($file))) {
+            throw new RuntimeException('Failed read data file.');
+        }
+        return $res;
     }
 
     public function readEncFile($encfile)
@@ -67,7 +70,10 @@ class MyEnc
                 );
             }
         }
-        return file_get_contents($this->encFile);
+        if (FALSE === ($res = file_get_contents($this->encFile))) {
+            throw new RuntimeException('Failed read enctypted file.');
+        }
+        return $res;
     }
 
     public function encodeFile($file)
@@ -84,8 +90,10 @@ class MyEnc
         if (FALSE === $encData) {
             throw new RuntimeException('Failed encrypt...');
         }
-        $res = $this->makeMetaFile($this->metaFile, $iv, $tag);
-        file_put_contents($this->encFile, $encData);
+        $this->makeMetaFile($this->metaFile, $iv, $tag);
+        if (FALSE === file_put_contents($this->encFile, $encData)) {
+            throw new RuntimeException('Cannot make encrypted file...');
+        }
         return $this->encFile;
     }
 
@@ -101,7 +109,9 @@ class MyEnc
         if (FALSE === $data) {
             throw new RuntimeException('Decrypt failed...');
         }
-        $res = file_put_contents($this->outFile, $data);
+        if (FALSE === file_put_contents($this->outFile, $data)) {
+            throw new RuntimeException('Cannot make decoded file...');
+        }
         return $this->outFile;
     }
 
@@ -110,7 +120,10 @@ class MyEnc
         $meta = [];
         $meta[] = bin2hex($iv);
         $meta[] = isset($tag) ? bin2hex($tag) : null;
-        return file_put_contents($metaFile, implode("\n", $meta));
+        if (FALSE === file_put_contents($metaFile, implode("\n", $meta))) {
+            throw new RuntimeException('Cannot make meta file...');
+        }
+        return true;
     }
 
     public function readMetaFile($metaFile)
@@ -118,7 +131,10 @@ class MyEnc
         if (!is_file($metaFile)) {
             throw new RuntimeException('no meta file');
         }
-        $res = explode("\n", file_get_contents($metaFile));
+        if (FALSE === ($res = file_get_contents($metaFile))) {
+            throw new RuntimeException('Cannot read meta file...');
+        }
+        $res = explode("\n", $res);
         $meta = [];
         $meta[] = hex2bin($res[0]);
         $meta[] = isset($res[1]) ? hex2bin($res[1]) : null;
